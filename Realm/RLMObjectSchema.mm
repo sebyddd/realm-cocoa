@@ -22,6 +22,12 @@
 #import "RLMObject_Private.h"
 #import "RLMUtil.hpp"
 
+#if REALM_SWIFT
+#import <Realm/Realm-Swift.h>
+#else
+#import "RLMSwiftSupportFallback.h"
+#endif
+
 #import <tightdb/table.hpp>
 
 // private properties
@@ -30,7 +36,6 @@
 @property (nonatomic, readwrite, assign) NSString *className;
 @property (nonatomic, readwrite) RLMProperty *primaryKeyProperty;
 @end
-
 
 @implementation RLMObjectSchema
 
@@ -63,40 +68,28 @@
 }
 
 +(instancetype)schemaForObjectClass:(Class)objectClass {
-    // get objc properties
-    unsigned int count;
-    objc_property_t *props = class_copyPropertyList(objectClass, &count);
-    NSString *primaryKey = [objectClass primaryKey];
-
     RLMObjectSchema *schema = [RLMObjectSchema new];
     schema.className = [objectClass className];
     schema.objectClass = objectClass;
 
-    // validate and convert to RLMProperties, and store in objectSchema
-    NSMutableArray *propArray = [NSMutableArray arrayWithCapacity:count];
-    for (unsigned int i = 0; i < count; i++) {
-        NSString *propertyName = [NSString stringWithUTF8String:property_getName(props[i])];
-        BOOL ignored = [[objectClass ignoredProperties] containsObject:propertyName];
+    // create array of RLMProperties
+    if ([RLMSwiftSupport isSwiftClassName:NSStringFromClass(objectClass)]) {
+        schema.properties = [RLMSwiftSupport propertiesForClass:objectClass];
+    }
+    else {
+        schema.properties = [self propertiesForClass:objectClass];
+    }
 
-        // skip ignored properties
-        if (!ignored) {
-            RLMPropertyAttributes attr = [objectClass attributesForProperty:propertyName];
-            RLMProperty *property = [RLMProperty propertyForObjectProperty:props[i] attributes:attr];
-            [propArray addObject:property];
-
-            // if primary, set flag and store in objectSchema
-            if ([primaryKey isEqualToString:propertyName]) {
+    if (NSString *primaryKey = [objectClass primaryKey]) {
+        for (RLMProperty *prop in schema.properties) {
+            if ([primaryKey isEqualToString:prop.name]) {
                 // FIXME - re-enable when we have core suppport
                 //attr = attr | RLMPropertyAttributeIndexed;
-                schema.primaryKeyProperty = property;
+                schema.primaryKeyProperty = prop;
+                break;
             }
         }
-    }
-    free(props);
-    schema.properties = propArray;
 
-    // validate primary property if defined
-    if (primaryKey) {
         if (!schema.primaryKeyProperty) {
             NSString *message = [NSString stringWithFormat:@"Primary key property '%@' does not exist on object '%@'",
                                  primaryKey, schema.className];
@@ -112,7 +105,37 @@
     // set standalone class
     schema.standaloneClass = RLMStandaloneAccessorClassForObjectClass(objectClass, schema);
 
+    RLMReplaceSharedSchemaMethod(objectClass, schema);
+    RLMReplaceClassNameMethod(objectClass, schema.className);
+
     return schema;
+}
+
++ (NSArray *)propertiesForClass:(Class)objectClass {
+    NSArray *ignoredProperties = [objectClass ignoredProperties];
+
+    unsigned int count;
+    objc_property_t *props = class_copyPropertyList(objectClass, &count);
+    NSMutableArray *propArray = [NSMutableArray arrayWithCapacity:count];
+    for (unsigned int i = 0; i < count; i++) {
+        NSString *propertyName = @(property_getName(props[i]));
+        if ([ignoredProperties containsObject:propertyName]) {
+            continue;
+        }
+
+        unsigned int attCount;
+        objc_property_attribute_t *atts = property_copyAttributeList(props[i], &attCount);
+        RLMProperty *prop = [[RLMProperty alloc]  initWithName:propertyName
+                                                    attributes:[objectClass attributesForProperty:propertyName]
+                                                 attributeList:atts
+                                                attributeCount:attCount];
+        free(atts);
+        [propArray addObject:prop];
+    }
+
+    free(props);
+
+    return propArray;
 }
 
 
@@ -143,7 +166,7 @@
 
         [propArray addObject:prop];
     }
-    
+
     // create schema object and set properties
     RLMObjectSchema *schema = [RLMObjectSchema new];
     schema.properties = propArray;
@@ -176,4 +199,3 @@
 }
 
 @end
-
