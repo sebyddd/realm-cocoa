@@ -145,6 +145,7 @@ NSString * const c_defaultRealmFileName = @"default.realm";
     // set up global realm cache
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
+        RLMCheckForUpdates();
         // initilize realm cache
         clearRealmCache();
     });

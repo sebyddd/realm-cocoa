@@ -199,6 +199,23 @@ case "$COMMAND" in
         ;;
 
     ######################################
+    # Record Current Version
+    ######################################
+    "version")
+      cat << EOF > temp_version_h
+static NSString * const RLMVersionString = @"$(git describe)";
+static const int RLMVersionNumber[] = {$(git describe | sed 's/v\([0-9.]*\)-.*/\1/; s/\./, /g')};
+EOF
+
+      # Only touch the file if it's actually changed to avoid spurious rebuilds
+      if cmp --silent temp_version_h Realm/RLMVersion.h; then
+        rm temp_version_h
+      else
+        mv temp_version_h Realm/RLMVersion.h
+      fi
+      ;;
+
+    ######################################
     # Building
     ######################################
     "build")
@@ -214,6 +231,8 @@ case "$COMMAND" in
         ;;
 
     "ios")
+        sh build.sh version
+
         if [[ "$XCODE_VERSION" == "6" ]]; then
             # Build Universal Simulator/Device framework
             xcrealm "-scheme iOS -configuration Release -sdk iphonesimulator"
@@ -235,6 +254,8 @@ case "$COMMAND" in
         ;;
 
     "ios-debug")
+        sh build.sh version
+
         if [[ "$XCODE_VERSION" == "6" ]]; then
             # Build Universal Simulator/Device framework
             xcrealm "-scheme iOS -configuration Debug -sdk iphonesimulator"

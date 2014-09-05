@@ -502,6 +502,7 @@
 			buildConfigurationList = 02C4147C191DE49600F858D9 /* Build configuration list for PBXNativeTarget "OSX Framework" */;
 			buildPhases = (
 				022C8BF61942893D00BCDB9D /* Download Core */,
+				3F80E0FB19BA8D5900907B21 /* Set Version Number */,
 				02C41459191DE49600F858D9 /* Sources */,
 				02C4145A191DE49600F858D9 /* Frameworks */,
 				02C4145B191DE49600F858D9 /* Headers */,
@@ -543,6 +544,7 @@
 				02C4154A1921BE3F00F858D9 /* Headers */,
 				E82827DD19477A390090B385 /* Resources */,
 				02026CC5193CE3D600E4EEF8 /* Build Fat Library */,
+				3F80E0FC19BA8D8B00907B21 /* Set Version Number */,
 			);
 			buildRules = (
 			);
@@ -672,6 +674,34 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "sh build.sh download-core";
+		};
+		3F80E0FB19BA8D5900907B21 /* Set Version Number */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Set Version Number";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "sh build.sh version";
+		};
+		3F80E0FC19BA8D8B00907B21 /* Set Version Number */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Set Version Number";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "sh build.sh version";
 		};
 		421A994E1933648E00F5E4D4 /* Build Framework */ = {
 			isa = PBXShellScriptBuildPhase;

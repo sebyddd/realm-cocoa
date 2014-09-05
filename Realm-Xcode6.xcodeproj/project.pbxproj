@@ -780,6 +780,7 @@
 			buildConfigurationList = E856D1E8195614A400FB2FCF /* Build configuration list for PBXNativeTarget "iOS" */;
 			buildPhases = (
 				E856D1EE1956151D00FB2FCF /* Download Core */,
+				3FE79FFB19BA81E100780C9A /* Set Version Number */,
 				E856D1D0195614A300FB2FCF /* Sources */,
 				E856D1D2195614A300FB2FCF /* Headers */,
 			);
@@ -837,6 +838,7 @@
 			buildConfigurationList = E8D89BAE1955FC6D00CF2B9A /* Build configuration list for PBXNativeTarget "OSX" */;
 			buildPhases = (
 				E81A1FB71955FCE700FDED82 /* Download Core */,
+				3FE79FFA19BA81B000780C9A /* Set Version Number */,
 				E8D89B931955FC6D00CF2B9A /* Sources */,
 				E8D89B951955FC6D00CF2B9A /* Headers */,
 				E8D89B961955FC6D00CF2B9A /* Resources */,
@@ -962,6 +964,34 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		3FE79FFA19BA81B000780C9A /* Set Version Number */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Set Version Number";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "sh build.sh version";
+		};
+		3FE79FFB19BA81E100780C9A /* Set Version Number */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Set Version Number";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "sh build.sh version";
+		};
 		E81A1FB71955FCE700FDED82 /* Download Core */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;

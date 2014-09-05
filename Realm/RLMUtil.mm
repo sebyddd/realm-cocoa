@@ -17,11 +17,14 @@
 ////////////////////////////////////////////////////////////////////////////
 
 #import <Foundation/Foundation.h>
-#import "RLMObjectSchema_Private.hpp"
+
 #import "RLMUtil.hpp"
-#import "RLMObject.h"
+
 #import "RLMArray_Private.hpp"
+#import "RLMObject.h"
+#import "RLMObjectSchema_Private.hpp"
 #import "RLMProperty.h"
+#import "RLMVersion.h"
 
 static inline bool nsnumber_is_like_integer(NSNumber *obj)
 {
@@ -205,4 +208,56 @@ NSArray *RLMValidatedArrayForObjectSchema(NSArray *array, RLMObjectSchema *objec
     }
     return outArray;
 };
+
+void RLMCheckForUpdates() {
+#if TARGET_IPHONE_SIMULATOR
+    if (getenv("REALM_DISABLE_UPDATE_CHECKER")) {
+        return;
+    }
+
+    // Only check if it's been at least a day since our last check
+    NSUserDefaults *settings = [[NSUserDefaults alloc] initWithSuiteName:@"io.Realm.Realm"];
+    double lastUpdateCheck = [settings doubleForKey:@"Last Update Check"];
+    if ([[NSDate dateWithTimeIntervalSince1970:lastUpdateCheck] timeIntervalSinceNow] > -24 * 60 * 60) {
+        return;
+    }
+
+    auto handler = ^(NSData *data, __unused NSURLResponse *response, NSError *error) {
+        if (error) {
+            NSLog(@"Failed to check for updates to Realm: %@", error);
+            return;
+        }
+
+        NSString *version = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        if ([RLMVersionString hasPrefix:version]) {
+            [settings setDouble:NSDate.date.timeIntervalSince1970 forKey:@"Last Update Check"];
+            return;
+        }
+
+        NSArray *parts = [[version substringFromIndex:1] componentsSeparatedByString:@"."];
+        if (parts.count != 3) {
+            NSLog(@"Failed to check for updates to Realm: Got version number in unexpected format");
+            return;
+        }
+
+        [settings setDouble:NSDate.date.timeIntervalSince1970 forKey:@"Last Update Check"];
+
+        const int *expectedPart = RLMVersionNumber;
+        for (NSString *part in parts) {
+            int partValue = part.intValue;
+            if (*expectedPart > partValue) {
+                // User has something newer than latest release
+                return;
+            }
+            if (*expectedPart++ < partValue) {
+                NSLog(@"Realm %@ is available: http://static.realm.io/downloads/cocoa/latest", version);
+                return;
+            }
+        }
+    };
+
+    NSString *url = [NSString stringWithFormat:@"http://static.realm.io/update/latest?%@", RLMVersionString];
+    [[NSURLSession.sharedSession dataTaskWithURL:[NSURL URLWithString:url] completionHandler:handler] resume];
+#endif
+}
 
